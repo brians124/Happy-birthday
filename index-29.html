@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Birthday Ireen 🎁</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lato:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8d5a3;
+      --gold-shine: #f5e6b8;
+      --rose: #e8b4b8;
+      --rose-light: #f7e8ea;
+      --rose-deep: #c07880;
+      --blush: #fdf0f2;
+      --cream: #fdf7f0;
+      --text-dark: #3a2520;
+      --text-mid: #7a5c50;
+      --text-soft: #a08070;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      min-height:100vh;
+      background: radial-gradient(ellipse at 30% 20%, #fce8ea 0%, #fdf0e8 40%, #f8e8f0 70%, #fdf7f0 100%);
+      font-family:'Lato', sans-serif;
+      overflow-x:hidden;
+    }
+
+    canvas#bgParticles {
+      position:fixed; inset:0; z-index:0; pointer-events:none;
+    }
+
+    /* ============================================================
+       SCREEN MANAGER
+    ============================================================ */
+    .screen {
+      position:fixed; inset:0; z-index:10;
+      display:flex; align-items:center; justify-content:center;
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .screen.hidden {
+      opacity:0; transform:scale(1.04); pointer-events:none;
+    }
+    .screen.gone { display:none !important; }
+
+    /* ============================================================
+       LOGIN SCREEN — DARK ROOM + LAMP
+    ============================================================ */
+    #loginScreen {
+      background: #0d0608;
+      overflow:hidden;
+      flex-direction:column;
+      justify-content:flex-start;
+      align-items:center;
+    }
+    #loginScreen::after {
+      content:'';
+      position:absolute; inset:0;
+      background: radial-gradient(ellipse 80% 65% at 50% 22%, rgba(255,210,80,0) 0%, transparent 100%);
+      transition: background 1.4s ease;
+      pointer-events:none; z-index:1;
+    }
+    #loginScreen.lit::after {
+      background: radial-gradient(ellipse 90% 70% at 50% 22%, rgba(255,218,90,0.18) 0%, rgba(201,168,76,0.06) 50%, transparent 75%);
+    }
+    .lamp-wrap {
+      position:relative; z-index:20;
+      display:flex; flex-direction:column; align-items:center;
+      cursor:pointer; user-select:none; padding-top:0;
+      transition:filter .3s;
+    }
+    .lamp-wrap:hover { filter:brightness(1.12); }
+    .lamp-svg-wrap {
+      position:relative;
+      width:160px;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .lamp-svg-wrap svg { overflow:visible; }
+    /* Glow cone below lamp when lit */
+    .lamp-glow-cone {
+      position:absolute;
+      top:100%; left:50%;
+      transform:translateX(-50%);
+      width:0; height:0;
+      border-left:130px solid transparent;
+      border-right:130px solid transparent;
+      border-top:0px solid transparent;
+      opacity:0;
+      transition:opacity 1.4s ease, border-top-width 1.4s ease;
+      pointer-events:none;
+      z-index:1;
+    }
+    #loginScreen.lit .lamp-glow-cone {
+      border-top:260px solid rgba(255,210,70,0.055);
+      opacity:1;
+    }
+    .lamp-hint {
+      position:absolute; top:290px; left:50%; transform:translateX(-50%);
+      color:rgba(255,255,255,0.3); font-size:10px; letter-spacing:4px;
+      text-transform:uppercase; font-family:'Lato',sans-serif; font-weight:300;
+      white-space:nowrap; animation:hintPulse 2.2s ease-in-out infinite;
+      transition:opacity .6s; z-index:20;
+    }
+    #loginScreen.lit .lamp-hint { opacity:0; pointer-events:none; }
+    @keyframes hintPulse { 0%,100%{opacity:.3;} 50%{opacity:.7;} }
+
+    .login-box {
+      position:relative; z-index:10;
+      background:rgba(25,10,8,0.8);
+      backdrop-filter:blur(20px);
+      border:1px solid rgba(201,168,76,0.2);
+      border-radius:6px;
+      padding:40px 48px 44px;
+      width:min(460px,92vw);
+      text-align:center;
+      box-shadow:0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.1);
+      margin-top:30px;
+      opacity:0; transform:translateY(28px) scale(0.97);
+      transition:opacity 1s 0.4s ease, transform 1s 0.4s ease;
+      pointer-events:none;
+    }
+    #loginScreen.lit .login-box {
+      opacity:1; transform:translateY(0) scale(1); pointer-events:all;
+    }
+    .login-box::before { content:'✦'; position:absolute; top:14px; left:18px; color:var(--gold); font-size:13px; opacity:.5; }
+    .login-box::after  { content:'✦'; position:absolute; bottom:14px; right:18px; color:var(--gold); font-size:13px; opacity:.5; }
+
+    .gift-icon { font-size:46px; display:block; margin-bottom:4px; animation:giftBounce 2s ease-in-out infinite; }
+    @keyframes giftBounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+
+    .login-sub   { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:11px; color:rgba(232,180,184,0.8); letter-spacing:3px; text-transform:uppercase; margin-bottom:5px; }
+    .login-title { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:rgba(255,248,230,0.95); margin-bottom:8px; line-height:1.2; }
+    .login-hint  { font-size:12px; color:rgba(200,170,150,0.75); font-weight:300; margin-bottom:26px; line-height:1.8; }
+    .login-hint span { color:var(--gold-shine); font-style:italic; }
+
+    .input-wrap input {
+      width:100%; padding:13px 20px;
+      border:1.5px solid rgba(201,168,76,0.3); border-radius:4px;
+      background:rgba(255,248,220,0.07);
+      font-family:'Cormorant Garamond',serif; font-size:17px;
+      color:rgba(255,248,210,0.95); text-align:center; outline:none;
+      transition:border-color .3s,box-shadow .3s,background .3s; letter-spacing:.5px;
+      caret-color:var(--gold);
+    }
+    .input-wrap input::placeholder { color:rgba(200,170,120,0.45); font-style:italic; font-size:15px; }
+    .input-wrap input:focus {
+      border-color:var(--gold); background:rgba(255,248,220,0.12);
+      box-shadow:0 0 0 3px rgba(201,168,76,.15);
+    }
+
+    #loginError { font-size:11px; color:#e8a0a8; min-height:20px; margin:8px 0 10px; font-style:italic; opacity:0; transition:opacity .3s; }
+    #loginError.show { opacity:1; }
+
+    .login-btn {
+      width:100%; padding:14px;
+      background:linear-gradient(135deg,#c9a84c 0%,#e8c870 50%,#c9a84c 100%);
+      background-size:200% 100%;
+      border:none; border-radius:4px; color:#3a2510;
+      font-family:'Lato',sans-serif; font-size:10px; font-weight:500;
+      letter-spacing:4px; text-transform:uppercase; cursor:pointer;
+      transition:background-position .4s,transform .2s,box-shadow .3s;
+      box-shadow:0 6px 20px rgba(201,168,76,.35);
+    }
+    .login-btn:hover { background-position:100% 0; transform:translateY(-2px); box-shadow:0 10px 28px rgba(201,168,76,.55); }
+
+    @keyframes shake {
+      0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-8px);} 40%,80%{transform:translateX(8px);}
+    }
+    .shake { animation:shake .4s ease; }
+
+    /* ============================================================
+       VIDEO SCREEN
+    ============================================================ */
+    #videoScreen {
+      background:#000;
+      flex-direction:column;
+    }
+
+    .video-wrap {
+      position:relative;
+      width:100%; height:100%;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+    }
+
+    video#welcomeVid {
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    /* dark gradient overlay on video */
+    .vid-overlay {
+      position:absolute; inset:0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.15) 0%,
+        rgba(0,0,0,0.05) 40%,
+        rgba(0,0,0,0.35) 100%
+      );
+      pointer-events:none;
+    }
+
+    /* welcome text over video */
+    .vid-text {
+      position:absolute;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      text-align:center;
+      pointer-events:none;
+      z-index:20;
+      animation:vidTextIn 1.2s 0.5s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes vidTextIn {
+      from{opacity:0;transform:translate(-50%,-50%) scale(0.9);}
+      to{opacity:1;transform:translate(-50%,-50%) scale(1);}
+    }
+    .vid-text .welcome-label {
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic; font-size:clamp(13px,2.5vw,18px);
+      color:rgba(255,255,255,0.9); letter-spacing:6px; text-transform:uppercase;
+      display:block; margin-bottom:10px;
+      text-shadow:0 2px 20px rgba(0,0,0,0.5);
+    }
+    .vid-text .welcome-name {
+      font-family:'Playfair Display',serif;
+      font-weight:700; font-style:italic;
+      font-size:clamp(38px,8vw,90px);
+      color:#fff;
+      line-height:1;
+      text-shadow:0 4px 30px rgba(0,0,0,0.5), 0 0 60px rgba(201,168,76,0.4);
+    }
+    .vid-text .welcome-name span { color:var(--gold-shine); }
+
+    /* skip button */
+    .skip-btn {
+      position:absolute; bottom:28px; right:28px; z-index:30;
+      background:rgba(255,255,255,0.15); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,0.3); border-radius:30px;
+      color:#fff; font-family:'Lato',sans-serif;
+      font-size:10px; letter-spacing:3px; text-transform:uppercase;
+      padding:10px 22px; cursor:pointer;
+      transition:background .3s, transform .2s;
+    }
+    .skip-btn:hover { background:rgba(255,255,255,0.25); transform:translateY(-1px); }
+
+    /* progress bar */
+    .vid-progress {
+      position:absolute; bottom:0; left:0; right:0; height:3px;
+      background:rgba(255,255,255,0.2); z-index:30;
+    }
+    .vid-progress-bar {
+      height:100%;
+      background:linear-gradient(to right, var(--gold), var(--gold-shine));
+      width:0%; transition:width .1s linear;
+    }
+
+    /* ============================================================
+       SVG BUTTERFLIES OVER VIDEO
+    ============================================================ */
+    #butterflyCanvas {
+      position:absolute; inset:0;
+      pointer-events:none; z-index:25;
+      width:100%; height:100%;
+    }
+
+    /* ============================================================
+       CARD SCREEN
+    ============================================================ */
+    #cardScreen {
+      position:relative; z-index:1;
+      display:none !important;
+      padding:50px 20px 60px;
+      min-height:100vh;
+      align-items:flex-start;
+      overflow-y:auto;
+    }
+    #cardScreen.visible {
+      display:flex !important;
+      position:relative;
+      opacity:1; transform:none;
+      pointer-events:all;
+    }
+
+    .card {
+      max-width:760px; width:100%; margin:0 auto;
+      background:rgba(255,255,255,0.93);
+      border-radius:4px;
+      box-shadow:
+        0 0 0 1px rgba(201,168,76,0.2),
+        0 3px 0 rgba(201,168,76,0.25),
+        0 60px 120px rgba(150,90,80,0.2),
+        0 20px 40px rgba(150,90,80,0.12);
+      overflow:hidden;
+      animation:cardIn 1s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes cardIn {
+      from{opacity:0;transform:translateY(50px) scale(0.96);}
+      to{opacity:1;transform:translateY(0) scale(1);}
+    }
+
+    .card-inner { position:relative; }
+    .card-inner::before {
+      content:''; position:absolute; inset:10px;
+      border:1px solid rgba(201,168,76,0.3);
+      pointer-events:none; z-index:5; border-radius:2px;
+    }
+
+    .orn { position:absolute; z-index:6; color:var(--gold); font-size:18px; opacity:.75; line-height:1; }
+    .orn.tl{top:18px;left:20px;} .orn.tr{top:18px;right:20px;transform:scaleX(-1);}
+    .orn.bl{bottom:18px;left:20px;transform:scaleY(-1);} .orn.br{bottom:18px;right:20px;transform:scale(-1,-1);}
+
+    .hero { position:relative; height:min(420px,55vw); overflow:hidden; }
+    .hero img { width:100%; height:100%; object-fit:cover; object-position:center 25%; display:block; transition:transform 8s ease; }
+    .card:hover .hero img { transform:scale(1.04); }
+    .hero-overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(to bottom,rgba(253,240,242,0) 0%,rgba(253,240,242,0.05) 55%,rgba(253,247,240,0.97) 100%);
+    }
+    .hero-text { position:absolute; top:24px; left:0; right:0; text-align:center; z-index:4; animation:fadeDown 1s 0.3s both; }
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-12px);} to{opacity:1;transform:translateY(0);} }
+    .hero-text .badge {
+      display:inline-block;
+      background:linear-gradient(135deg,rgba(201,168,76,.9),rgba(232,200,112,.9));
+      color:#fff; font-size:9px; letter-spacing:4px; text-transform:uppercase;
+      padding:7px 20px; border-radius:2px; font-weight:400;
+      box-shadow:0 4px 16px rgba(201,168,76,.4);
+    }
+
+    .body { padding:10px 60px 60px; text-align:center; }
+
+    .name-block { margin-bottom:8px; animation:fadeUp 1s 0.2s both; }
+    .happy-birthday-label { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:16px; color:var(--text-soft); letter-spacing:3px; text-transform:uppercase; display:block; margin-bottom:4px; }
+    .name-main  { font-family:'Playfair Display',serif; font-size:clamp(44px,9vw,76px); font-weight:700; color:var(--text-dark); line-height:1; letter-spacing:-1px; }
+    .name-last  { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(32px,7vw,58px); font-weight:400; color:var(--gold); line-height:1.1; display:block; }
+
+    .divider { display:flex; align-items:center; gap:14px; max-width:400px; margin:20px auto 24px; animation:fadeUp 1s 0.35s both; }
+    .divider-line { flex:1; height:1px; background:linear-gradient(to right,transparent,var(--gold),transparent); }
+    .divider-gem  { width:9px; height:9px; background:var(--gold); transform:rotate(45deg); flex-shrink:0; }
+
+    .quote { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:16.5px; color:var(--rose-deep); margin-bottom:30px; line-height:1.6; animation:fadeUp 1s 0.45s both; }
+    .quote::before,.quote::after { content:'"'; color:var(--gold); font-size:22px; vertical-align:-3px; }
+
+    .message { text-align:left; font-size:14px; color:var(--text-mid); line-height:2; font-weight:300; max-width:580px; margin:0 auto 32px; animation:fadeUp 1s 0.55s both; }
+    .message p { margin-bottom:16px; }
+    .message .salutation { font-family:'Playfair Display',serif; font-size:18px; color:var(--text-dark); font-style:italic; }
+
+    .floral { display:flex; justify-content:center; align-items:flex-end; gap:8px; margin:28px 0 8px; animation:fadeUp 1s 0.65s both; }
+    .floral span { font-size:24px; }
+    .floral span:nth-child(even) { transform:translateY(-5px); font-size:18px; }
+
+    .butterflies-row { display:flex; justify-content:center; gap:24px; margin:10px 0 30px; animation:fadeUp 1s 0.7s both; }
+    .bf { font-size:22px; display:inline-block; }
+    .bf:nth-child(1){animation:flutter 3.2s ease-in-out infinite;}
+    .bf:nth-child(2){animation:flutter 2.8s ease-in-out 0.4s infinite; font-size:14px; color:var(--rose-deep);}
+    .bf:nth-child(3){animation:flutter 3.5s ease-in-out 0.9s infinite;}
+    @keyframes flutter { 0%,100%{transform:translateY(0) rotate(-6deg);} 50%{transform:translateY(-8px) rotate(6deg);} }
+
+    .sig-block { animation:fadeUp 1s 0.8s both; margin-bottom:8px; }
+    .sig-rule { display:flex; align-items:center; gap:14px; justify-content:center; margin-bottom:20px; }
+    .sig-rule hr { width:70px; border:none; border-top:1px solid var(--gold-light); }
+    .sig-rule span { color:var(--gold); font-size:14px; }
+    .with-love  { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--text-soft); margin-bottom:6px; }
+    .sig-sender { font-family:'Playfair Display',serif; font-style:italic; font-size:34px; color:var(--gold); text-shadow:0 2px 12px rgba(201,168,76,.3); }
+    .sig-date   { font-size:10px; color:var(--rose-deep); letter-spacing:4px; text-transform:uppercase; margin-top:8px; font-weight:300; }
+
+    .confetti-strip { display:flex; justify-content:center; gap:6px; font-size:10px; color:var(--gold); letter-spacing:8px; margin:20px 0 4px; animation:fadeUp 1s 0.9s both; opacity:.7; }
+
+    .footer { background:linear-gradient(135deg,#c9a84c 0%,#d4b563 50%,#c9a84c 100%); padding:16px 24px; text-align:center; }
+    .footer p { font-size:9px; color:rgba(255,255,255,.9); letter-spacing:4px; text-transform:uppercase; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(22px);} to{opacity:1;transform:translateY(0);} }
+
+    @media(max-width:600px){
+      .hero{height:240px;} .body{padding:10px 26px 44px;} .login-box{padding:40px 28px 36px;}
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bgParticles"></canvas>
+
+<!-- ==================== LOGIN ==================== -->
+<div class="screen" id="loginScreen">
+
+  <!-- Lamp (clickable) -->
+  <div class="lamp-wrap" onclick="switchOnLamp()" title="Click to switch on the light">
+    <div class="lamp-svg-wrap">
+      <svg id="lampSVG" width="170" height="270" viewBox="0 0 160 270" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bulbGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"  stop-color="#fff8c0" stop-opacity="1"/>
+            <stop offset="50%" stop-color="#ffcc40" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="#ff8800" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="bulbOff" cx="38%" cy="32%" r="60%">
+            <stop offset="0%"  stop-color="#2e2010"/>
+            <stop offset="100%" stop-color="#100808"/>
+          </radialGradient>
+          <radialGradient id="bulbOn" cx="38%" cy="32%" r="60%">
+            <stop offset="0%"  stop-color="#fffbe8"/>
+            <stop offset="45%" stop-color="#ffe98a"/>
+            <stop offset="100%" stop-color="#e8a020"/>
+          </radialGradient>
+          <linearGradient id="cordGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"  stop-color="#1c1410"/>
+            <stop offset="35%" stop-color="#4a3828"/>
+            <stop offset="65%" stop-color="#5e4a36"/>
+            <stop offset="100%" stop-color="#1c1410"/>
+          </linearGradient>
+          <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"  stop-color="#9a8060"/>
+            <stop offset="40%" stop-color="#c9a84c"/>
+            <stop offset="100%" stop-color="#5a4020"/>
+          </linearGradient>
+          <linearGradient id="cageBarH" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"  stop-color="#3a2a18"/>
+            <stop offset="30%" stop-color="#7a5a30"/>
+            <stop offset="70%" stop-color="#8a6a3a"/>
+            <stop offset="100%" stop-color="#3a2a18"/>
+          </linearGradient>
+          <linearGradient id="cageBarV" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"  stop-color="#2a1e10"/>
+            <stop offset="50%" stop-color="#6a4e28"/>
+            <stop offset="100%" stop-color="#2a1e10"/>
+          </linearGradient>
+          <filter id="softBlur">
+            <feGaussianBlur stdDeviation="4"/>
+          </filter>
+          <filter id="glowBig">
+            <feGaussianBlur stdDeviation="10" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <clipPath id="cageClip">
+            <ellipse cx="80" cy="175" rx="42" ry="52"/>
+          </clipPath>
+        </defs>
+
+        <!-- ── CORD ── -->
+        <rect x="77.5" y="0" width="5" height="68" rx="2.5" fill="url(#cordGrad)"/>
+        <line x1="78.5" y1="4"  x2="81.5" y2="16" stroke="#0e0a06" stroke-width="0.8" opacity="0.55"/>
+        <line x1="81.5" y1="16" x2="78.5" y2="28" stroke="#0e0a06" stroke-width="0.8" opacity="0.55"/>
+        <line x1="78.5" y1="28" x2="81.5" y2="40" stroke="#0e0a06" stroke-width="0.8" opacity="0.55"/>
+        <line x1="81.5" y1="40" x2="78.5" y2="52" stroke="#0e0a06" stroke-width="0.8" opacity="0.55"/>
+        <line x1="78.5" y1="52" x2="81.5" y2="64" stroke="#0e0a06" stroke-width="0.8" opacity="0.55"/>
+
+        <!-- ── CEILING CAP (top mount) ── -->
+        <ellipse cx="80" cy="68" rx="22" ry="7" fill="url(#capGrad)"/>
+        <ellipse cx="80" cy="66" rx="20" ry="5" fill="#c9a84c" opacity="0.35"/>
+        <rect x="58" y="68" width="44" height="9" rx="4" fill="url(#capGrad)"/>
+        <ellipse cx="80" cy="77" rx="22" ry="5" fill="#7a5820"/>
+        <ellipse cx="80" cy="76" rx="18" ry="3.5" fill="#c9a84c" opacity="0.25"/>
+
+        <!-- ── SOCKET NECK ── -->
+        <rect x="74" y="77" width="12" height="20" rx="4" fill="#7a5820"/>
+        <rect x="76" y="78" width="8" height="18" rx="3" fill="#5a3e14"/>
+        <!-- socket thread lines -->
+        <line x1="74" y1="83" x2="86" y2="83" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
+        <line x1="74" y1="87" x2="86" y2="87" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
+        <line x1="74" y1="91" x2="86" y2="91" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
+
+        <!-- ── CAGE top ring ── -->
+        <ellipse cx="80" cy="97" rx="42" ry="10" fill="none" stroke="url(#cageBarH)" stroke-width="4.5"/>
+        <ellipse cx="80" cy="96" rx="42" ry="9.5" fill="none" stroke="#c9a84c" stroke-width="1" opacity="0.3"/>
+
+        <!-- ── CAGE bottom ring ── -->
+        <ellipse cx="80" cy="252" rx="34" ry="8" fill="none" stroke="url(#cageBarH)" stroke-width="4"/>
+        <ellipse cx="80" cy="251" rx="34" ry="7.5" fill="none" stroke="#c9a84c" stroke-width="1" opacity="0.25"/>
+
+        <!-- ── CAGE middle ring ── -->
+        <ellipse cx="80" cy="175" rx="44" ry="10.5" fill="none" stroke="url(#cageBarH)" stroke-width="3.5"/>
+        <ellipse cx="80" cy="174" rx="44" ry="10" fill="none" stroke="#c9a84c" stroke-width="0.8" opacity="0.25"/>
+
+        <!-- ── CAGE vertical bars (6 bars) ── -->
+        <!-- bar 1: far left -->
+        <path d="M 40,97 Q 36,175 44,252" fill="none" stroke="url(#cageBarV)" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- bar 2: left -->
+        <path d="M 57,100 Q 51,175 55,251" fill="none" stroke="url(#cageBarV)" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- bar 3: centre-left -->
+        <path d="M 71,103 Q 68,175 68,252" fill="none" stroke="url(#cageBarV)" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- bar 4: centre-right -->
+        <path d="M 89,103 Q 92,175 92,252" fill="none" stroke="url(#cageBarV)" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- bar 5: right -->
+        <path d="M 103,100 Q 109,175 105,251" fill="none" stroke="url(#cageBarV)" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- bar 6: far right -->
+        <path d="M 120,97 Q 124,175 116,252" fill="none" stroke="url(#cageBarV)" stroke-width="3.5" stroke-linecap="round"/>
+
+        <!-- bar shine highlights -->
+        <path d="M 41,100 Q 37.5,175 45,249" fill="none" stroke="rgba(201,168,76,0.18)" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M 58,103 Q 52.5,175 56.5,248" fill="none" stroke="rgba(201,168,76,0.18)" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M 104,103 Q 110,175 106.5,248" fill="none" stroke="rgba(201,168,76,0.18)" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M 121,100 Q 125,175 117,249" fill="none" stroke="rgba(201,168,76,0.18)" stroke-width="1.2" stroke-linecap="round"/>
+
+        <!-- ── AMBIENT GLOW (behind bulb, only when lit) ── -->
+        <circle id="ambientGlow" cx="80" cy="175" r="55" fill="rgba(255,180,40,0)" style="transition:fill 1.3s; filter:url(#softBlur);"/>
+
+        <!-- ── BULB halo ── -->
+        <circle id="bulbHalo" cx="80" cy="175" r="36" fill="url(#bulbGlow)" opacity="0" style="transition:opacity 1s; filter:url(#softBlur);"/>
+
+        <!-- ── BULB GLASS (Edison teardrop) ── -->
+        <!-- teardrop shape: round bottom, narrower top -->
+        <path id="bulbGlass"
+          d="M80,138 C95,138 106,150 106,168 C106,190 95,205 80,210 C65,205 54,190 54,168 C54,150 65,138 80,138 Z"
+          fill="url(#bulbOff)" style="transition:fill 1s;"/>
+        <!-- glass shine -->
+        <ellipse cx="70" cy="158" rx="6" ry="9" fill="rgba(255,255,255,0.07)" transform="rotate(-20,70,158)"/>
+        <ellipse cx="90" cy="163" rx="2.5" ry="4" fill="rgba(255,255,255,0.04)"/>
+
+        <!-- ── FILAMENT ── -->
+        <g id="filament" opacity="0.3" style="transition:opacity 1s;">
+          <polyline points="73,188 75,175 77,183 79,170 81,178 83,165 85,173 87,160" fill="none" stroke="#e8b840" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="73" y1="188" x2="87" y2="188" stroke="#a07828" stroke-width="1.2" opacity="0.7"/>
+          <line x1="80" y1="188" x2="80" y2="196" stroke="#806020" stroke-width="2"/>
+        </g>
+
+        <!-- ── BULB BASE (metal screw cap) ── -->
+        <rect x="73" y="207" width="14" height="6"  rx="2" fill="#8a6830"/>
+        <rect x="73" y="212" width="14" height="5"  rx="2" fill="#7a5a20"/>
+        <rect x="73" y="216" width="14" height="4"  rx="2" fill="#6a4e18"/>
+        <rect x="73" y="219" width="14" height="4"  rx="2" fill="#5a4010"/>
+        <line x1="73" y1="210" x2="87" y2="210" stroke="#c9a84c" stroke-width="0.7" opacity="0.4"/>
+        <line x1="73" y1="214" x2="87" y2="214" stroke="#c9a84c" stroke-width="0.7" opacity="0.4"/>
+        <line x1="73" y1="218" x2="87" y2="218" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
+        <!-- bottom contact -->
+        <ellipse cx="80" cy="223" rx="5" ry="2" fill="#4a3410"/>
+        <ellipse cx="80" cy="222.5" rx="3" ry="1.2" fill="#c9a84c" opacity="0.3"/>
+      </svg>
+
+      <!-- Light cone below lamp -->
+      <div class="lamp-glow-cone"></div>
+    </div>
+  </div>
+
+  <!-- hint text -->
+  <div class="lamp-hint">✦ &nbsp; Click the lamp to reveal &nbsp; ✦</div>
+
+  <!-- Login form — appears after lamp on -->
+  <div class="login-box">
+    <span class="gift-icon">🎁</span>
+    <p class="login-sub">A Special Surprise Awaits</p>
+    <h2 class="login-title">You Have a<br/>Birthday Gift!</h2>
+    <p class="login-hint">
+      This gift was created especially for you.<br/>
+      Enter your name to unwrap it.<br/>
+      <span>Hint: It's the birthday girl's name ✨</span>
+    </p>
+    <div class="input-wrap" style="margin-bottom:6px;">
+      <input id="nameInput" type="text" placeholder="Type your full name…" autocomplete="off" spellcheck="false"/>
+    </div>
+    <div id="loginError">❌ That name doesn't match. Try again!</div>
+    <button class="login-btn" onclick="checkName()">✦ &nbsp; Unwrap My Gift &nbsp; ✦</button>
+  </div>
+
+</div>
+
+<!-- ==================== VIDEO ==================== -->
+<div class="screen hidden" id="videoScreen">
+  <div class="video-wrap">
+    <video id="welcomeVid" playsinline>
+      <source src="https://raw.githubusercontent.com/brians124/Happy-birthday/main/welcome.mp4" type="video/mp4"/>
+    </video>
+    <div class="vid-overlay"></div>
+
+    <!-- Welcome text -->
+    <div class="vid-text">
+      <span class="welcome-label">✦ &nbsp; Welcome &nbsp; ✦</span>
+      <div class="welcome-name">Ireen<br/><span>Nantongo</span></div>
+    </div>
+
+    <!-- Butterfly canvas -->
+    <canvas id="butterflyCanvas"></canvas>
+
+    <!-- Progress bar -->
+    <div class="vid-progress"><div class="vid-progress-bar" id="vidBar"></div></div>
+
+    <!-- Skip -->
+    <button class="skip-btn" onclick="goToCard()">Skip &nbsp;›</button>
+  </div>
+</div>
+
+<!-- ==================== CARD ==================== -->
+<div id="cardScreen">
+  <div class="card">
+    <div class="card-inner">
+      <div class="orn tl">❧</div><div class="orn tr">❧</div>
+      <div class="orn bl">❧</div><div class="orn br">❧</div>
+
+      <div class="hero">
+        <img src="1000108435.webp" alt="Birthday gift with pink tulips"/>
+        <div class="hero-overlay"></div>
+        <div class="hero-text"><span class="badge">✦ &nbsp; A Birthday Celebration &nbsp; ✦</span></div>
+      </div>
+
+      <div class="body">
+        <div class="name-block">
+          <span class="happy-birthday-label">Happy Birthday</span>
+          <div class="name-main">Ireen</div>
+          <span class="name-last">Nantongo</span>
+        </div>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <div class="divider-gem"></div>
+          <div class="divider-line"></div>
+        </div>
+
+        <p class="quote">Every year with you is a gift worth celebrating.</p>
+
+        <div class="message">
+          <p class="salutation">Happy Birthday, Ireen Nantongo,</p>
+          <p>On this special day, I want to celebrate not only your birthday but also the wonderful person you are. Your kindness, strength, and beautiful spirit continue to inspire everyone around you — especially me.</p>
+          <p>Thank you for bringing joy, love, and meaning into my life. I am truly grateful for every moment we share together. May this new year of your life be filled with happiness, success, good health, and countless opportunities to achieve your dreams.</p>
+          <p>You deserve all the best that life has to offer. May your birthday be as special and remarkable as you are.</p>
+          <p>Wishing you a wonderful birthday and a year ahead filled with blessings, love, and unforgettable memories.</p>
+          <p><strong style="color:var(--text-dark);font-weight:500;">Happy Birthday, Ireen Nantongo.</strong></p>
+        </div>
+
+        <div class="floral">
+          <span>🌷</span><span>✦</span><span>🌷</span><span>✦</span>
+          <span>🌷</span><span>✦</span><span>🌷</span>
+        </div>
+        <div class="butterflies-row">
+          <span class="bf">🦋</span><span class="bf">✦</span><span class="bf">🦋</span>
+        </div>
+
+        <div class="sig-block">
+          <div class="sig-rule"><hr/><span>✦</span><hr/></div>
+          <p class="with-love">With all my love and warmest wishes,</p>
+          <p class="sig-sender">Nkata Brian</p>
+          <p class="sig-date">May 30, 2026</p>
+        </div>
+        <div class="confetti-strip">
+          <span>✦</span><span>✦</span><span>✦</span><span>✦</span><span>✦</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><p>✦ &nbsp; Celebrate the Gift of You, Ireen Nantongo &nbsp; ✦</p></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   BACKGROUND PARTICLES
+================================================================ */
+(function(){
+  const c = document.getElementById('bgParticles');
+  const ctx = c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){ W=c.width=innerWidth; H=c.height=innerHeight; }
+  resize(); addEventListener('resize',resize);
+  const cols=['#e8b4b8','#c9a84c','#f5dde0','#e8d5a3','#c07880'];
+  function P(){
+    this.reset=()=>{
+      this.x=Math.random()*W; this.y=Math.random()*H-H;
+      this.r=Math.random()*4+2; this.dx=(Math.random()-.5)*.6;
+      this.dy=Math.random()*.8+.3; this.op=Math.random()*.5+.2;
+      this.color=cols[0|Math.random()*cols.length];
+      this.a=Math.random()*Math.PI*2; this.spin=(Math.random()-.5)*.04;
+      this.sq=Math.random()<.4;
+    }; this.reset(); this.y=Math.random()*H;
+  }
+  for(let i=0;i<55;i++)pts.push(new P());
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      ctx.save(); ctx.globalAlpha=p.op; ctx.fillStyle=p.color;
+      ctx.translate(p.x,p.y); ctx.rotate(p.a);
+      if(p.sq){ ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r); }
+      else{ ctx.beginPath(); ctx.arc(0,0,p.r,0,Math.PI*2); ctx.fill(); }
+      ctx.restore();
+      p.x+=p.dx; p.y+=p.dy; p.a+=p.spin;
+      if(p.y>H+10) p.reset();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ================================================================
+   LAMP SWITCH
+================================================================ */
+function switchOnLamp(){
+  const ls=document.getElementById('loginScreen');
+  if(ls.classList.contains('lit')) return;
+  ls.classList.add('lit');
+
+  // --- bulb flicker then glow ---
+  const bulbGlass  = document.getElementById('bulbGlass');
+  const bulbHalo   = document.getElementById('bulbHalo');
+  const ambientGlow= document.getElementById('ambientGlow');
+  const filament   = document.getElementById('filament');
+
+  // flicker sequence
+  const flickers=[
+    {t:60,  bulb:'#ffe080', halo:0.15},
+    {t:110, bulb:'#2a1a10', halo:0},
+    {t:170, bulb:'#ffcc50', halo:0.3},
+    {t:220, bulb:'#1a0e08', halo:0},
+    {t:300, bulb:'#fff8d0', halo:0.6},
+    {t:360, bulb:'#ffe090', halo:0.4},
+    {t:440, bulb:'#fff9e0', halo:1.0},
+  ];
+
+  flickers.forEach(f=>{
+    setTimeout(()=>{
+      if(bulbGlass){
+        bulbGlass.style.transition='fill 0.05s';
+        bulbGlass.style.fill=f.bulb;
+      }
+      if(bulbHalo) bulbHalo.style.opacity=f.halo;
+    }, f.t);
+  });
+
+  // settle into full glow
+  setTimeout(()=>{
+    if(bulbGlass){
+      bulbGlass.style.transition='fill 0.6s';
+      bulbGlass.style.fill='url(#bulbOn)';
+    }
+    if(bulbHalo)    bulbHalo.style.opacity='1';
+    if(ambientGlow) ambientGlow.style.fill='rgba(255,180,40,0.15)';
+    if(filament)    filament.style.opacity='1';
+  }, 500);
+
+  // focus input
+  setTimeout(()=>{ document.getElementById('nameInput').focus(); },1400);
+}
+
+/* ================================================================
+   LOGIN
+================================================================ */
+const ACCEPTED=['ireen nantongo','ireen','nantongo'];
+function norm(s){ return s.trim().toLowerCase().replace(/\s+/,' '); }
+
+function checkName(){
+  const v=norm(document.getElementById('nameInput').value);
+  const err=document.getElementById('loginError');
+  if(!v){ err.textContent='❥ Please enter your name first.'; err.classList.add('show'); return; }
+  if(ACCEPTED.includes(v)){
+    err.classList.remove('show');
+    const ls=document.getElementById('loginScreen');
+    ls.classList.add('hidden');
+    setTimeout(()=>{ ls.classList.add('gone'); showVideo(); },900);
+  } else {
+    err.textContent="❌ That name doesn't match. Try again!";
+    err.classList.add('show');
+    const box=document.querySelector('.login-box');
+    box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+  }
+}
+document.getElementById('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') checkName(); });
+
+/* ================================================================
+   VIDEO SCREEN
+================================================================ */
+let butterflyAnim=null;
+
+function showVideo(){
+  const vs=document.getElementById('videoScreen');
+  vs.classList.remove('hidden');
+  const vid=document.getElementById('welcomeVid');
+  vid.currentTime=0;
+  vid.play().catch(()=>{});
+  startButterflies();
+
+  // progress bar
+  vid.addEventListener('timeupdate',()=>{
+    if(vid.duration){
+      document.getElementById('vidBar').style.width=(vid.currentTime/vid.duration*100)+'%';
+    }
+  });
+  vid.addEventListener('ended',()=>{ setTimeout(goToCard,600); });
+}
+
+function goToCard(){
+  stopButterflies();
+  const vs=document.getElementById('videoScreen');
+  vs.classList.add('hidden');
+  setTimeout(()=>{
+    vs.classList.add('gone');
+    const cs=document.getElementById('cardScreen');
+    cs.classList.add('visible');
+    launchConfetti();
+  },900);
+}
+
+/* ================================================================
+   BUTTERFLY ANIMATION OVER VIDEO
+================================================================ */
+function startButterflies(){
+  const canvas=document.getElementById('butterflyCanvas');
+  canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
+  const ctx=canvas.getContext('2d');
+
+  // resize observer
+  const ro=new ResizeObserver(()=>{ canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; });
+  ro.observe(canvas);
+
+  const butterflies=[];
+  const COUNT=14;
+
+  // Each butterfly has a bezier path it follows
+  function createBF(){
+    const side=Math.random()<.5?-1:1;
+    const startX=side<0?-80:canvas.width+80;
+    const startY=Math.random()*canvas.height*0.8+canvas.height*0.05;
+    const endX  =side<0?canvas.width+80:-80;
+    const endY  =Math.random()*canvas.height*0.8+canvas.height*0.05;
+    const cx1=Math.random()*canvas.width;
+    const cy1=Math.random()*canvas.height*0.3;
+    const cx2=Math.random()*canvas.width;
+    const cy2=canvas.height*0.5+Math.random()*canvas.height*0.4;
+    return {
+      t:-(Math.random()*0.6),          // start offset so they stagger
+      speed:0.0008+Math.random()*0.001,
+      sx:startX, sy:startY, ex:endX, ey:endY,
+      cx1,cy1,cx2,cy2,
+      wingPhase:Math.random()*Math.PI*2,
+      wingSpeed:0.12+Math.random()*0.08,
+      size:18+Math.random()*18,
+      // colour: gold or rose
+      hue: Math.random()<.55 ? '#c9a84c' : '#e8b4b8',
+      opacity:0.75+Math.random()*0.25
+    };
+  }
+
+  for(let i=0;i<COUNT;i++) butterflies.push(createBF());
+
+  // cubic bezier point
+  function bezier(t,p0,p1,p2,p3){
+    const u=1-t;
+    return u*u*u*p0 + 3*u*u*t*p1 + 3*u*t*t*p2 + t*t*t*p3;
+  }
+
+  function drawWing(ctx,x,y,size,flip,open,color){
+    ctx.save();
+    ctx.translate(x,y);
+    if(flip) ctx.scale(-1,1);
+    const w=size*open; // how wide wing is based on flap
+    ctx.beginPath();
+    // upper wing
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(-w*0.2,-size*0.6, -w,-size*0.9, -w*1.1,-size*0.1);
+    ctx.bezierCurveTo(-w*0.9,size*0.15, -w*0.2,size*0.05, 0,0);
+    // lower wing
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(-w*0.15,size*0.1, -w*0.8,size*0.6, -w*0.6,size*0.75);
+    ctx.bezierCurveTo(-w*0.3,size*0.85, -w*0.1,size*0.4, 0,0);
+    ctx.fillStyle=color;
+    ctx.fill();
+    // wing shimmer
+    ctx.beginPath();
+    ctx.moveTo(-w*0.3,-size*0.3);
+    ctx.bezierCurveTo(-w*0.5,-size*0.5,-w*0.7,-size*0.4,-w*0.5,-size*0.15);
+    ctx.strokeStyle='rgba(255,255,255,0.35)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawButterfly(ctx,x,y,size,wingAngle,color,alpha){
+    const open=Math.abs(Math.cos(wingAngle))*0.9+0.1;
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    // shadow
+    ctx.save();
+    ctx.globalAlpha=alpha*0.15;
+    ctx.translate(x+4,y+4);
+    drawWing(ctx,0,0,size,false,open,'#000');
+    drawWing(ctx,0,0,size,true,open,'#000');
+    ctx.restore();
+    // wings
+    drawWing(ctx,x,y,size,false,open,color);
+    drawWing(ctx,x,y,size,true,open,color);
+    // body
+    ctx.beginPath();
+    ctx.ellipse(x,y,size*0.06,size*0.45,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(60,30,10,0.7)';
+    ctx.fill();
+    // antennae
+    ctx.strokeStyle='rgba(80,40,10,0.6)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,y-size*0.4); ctx.quadraticCurveTo(x-size*0.3,y-size*0.9,x-size*0.2,y-size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y-size*0.4); ctx.quadraticCurveTo(x+size*0.3,y-size*0.9,x+size*0.2,y-size); ctx.stroke();
+    ctx.restore();
+  }
+
+  let running=true;
+  function loop(){
+    if(!running) return;
+    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    butterflies.forEach((bf,i)=>{
+      bf.t+=bf.speed;
+      if(bf.t>1.2){ butterflies[i]=createBF(); butterflies[i].t=-0.1; return; }
+      const tc=Math.max(0,Math.min(1,bf.t));
+      const x=bezier(tc,bf.sx,bf.cx1,bf.cx2,bf.ex);
+      const y=bezier(tc,bf.sy,bf.cy1,bf.cy2,bf.ey);
+      bf.wingPhase+=bf.wingSpeed;
+      // fade in/out at edges
+      let alpha=bf.opacity;
+      if(bf.t<0.05) alpha*=Math.max(0,bf.t/0.05);
+      if(bf.t>0.95) alpha*=Math.max(0,(1.2-bf.t)/0.25);
+      if(bf.t<0) return;
+      drawButterfly(ctx,x,y,bf.size,bf.wingPhase,bf.hue,alpha);
+    });
+    butterflyAnim=requestAnimationFrame(loop);
+  }
+  loop();
+
+  // expose stop
+  window._bfStop=()=>{ running=false; if(butterflyAnim) cancelAnimationFrame(butterflyAnim); ro.disconnect(); };
+}
+
+function stopButterflies(){
+  if(window._bfStop) window._bfStop();
+}
+
+/* ================================================================
+   CONFETTI BURST
+================================================================ */
+function launchConfetti(){
+  const c=document.createElement('canvas');
+  c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:999;';
+  document.body.appendChild(c);
+  c.width=innerWidth; c.height=innerHeight;
+  const ctx=c.getContext('2d');
+  const cols=['#c9a84c','#e8b4b8','#f5e6b8','#c07880','#fff','#e8d5a3'];
+  const pieces=Array.from({length:200},()=>({
+    x:Math.random()*c.width, y:Math.random()*c.height-c.height,
+    r:Math.random()*7+3, color:cols[0|Math.random()*cols.length],
+    dx:(Math.random()-.5)*4, dy:Math.random()*5+2,
+    angle:Math.random()*360, spin:(Math.random()-.5)*8,
+    w:Math.random()*10+5, h:Math.random()*5+3,
+    sq:Math.random()<.5
+  }));
+  let start=null;
+  function frame(ts){
+    if(!start)start=ts;
+    const el=(ts-start)/1000;
+    ctx.clearRect(0,0,c.width,c.height);
+    let alive=false;
+    pieces.forEach(p=>{
+      p.x+=p.dx; p.y+=p.dy; p.angle+=p.spin;
+      const op=Math.max(0,1-Math.max(0,el-1.5)/1.5);
+      if(p.y<c.height+20)alive=true;
+      ctx.save(); ctx.globalAlpha=op; ctx.fillStyle=p.color;
+      ctx.translate(p.x,p.y); ctx.rotate(p.angle*Math.PI/180);
+      if(p.sq) ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      else { ctx.beginPath(); ctx.arc(0,0,p.r,0,Math.PI*2); ctx.fill(); }
+      ctx.restore();
+    });
+    if(alive&&el<4)requestAnimationFrame(frame); else c.remove();
+  }
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>
